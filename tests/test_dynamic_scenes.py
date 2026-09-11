@@ -111,3 +111,42 @@ def test_start_loop_skips_done_callback_when_create_task_returns_none(monkeypatc
     assert created["running"] is True
     assert scene._running is True
     assert scene._task is None
+
+
+def test_async_stop_all_for_look_drains_paint_before_following_turn_off(monkeypatch):
+    paint_started = asyncio.Event()
+    paint_cancelled = asyncio.Event()
+    calls = []
+
+    async def fake_apply_preset(*_args, **kwargs):
+        calls.append(kwargs.get("blocking"))
+        paint_started.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            paint_cancelled.set()
+            raise
+
+    monkeypatch.setattr(dynamic_scenes, "apply_preset", fake_apply_preset)
+
+    async def run():
+        manager = dynamic_scenes.DynamicSceneManager()
+        manager.create_new(
+            _Hass(),
+            {
+                "look": "nightlight",
+                "light_entity_ids": ["light.hallway_ceiling_light"],
+                dynamic_scenes.ATTR_SCENE_PRESET_ID: "preset",
+            },
+            interval=3600,
+        )
+
+        await paint_started.wait()
+        await manager.async_stop_all_for_look("nightlight")
+        calls.append("turn_off")
+
+        assert calls == [True, "turn_off"]
+        assert paint_cancelled.is_set()
+        assert manager.dynamic_scenes == {}
+
+    asyncio.run(run())

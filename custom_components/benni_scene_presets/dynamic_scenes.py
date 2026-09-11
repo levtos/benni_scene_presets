@@ -70,6 +70,9 @@ class DynamicScene:
                     smart_shuffle,
                     self.parameters.get(ATTR_BRIGHTNESS, None),
                     step=run_count,  # advances a Kelvin scene's sweep through its values
+                    # Dynamic scene paints must finish before stop_look can drain
+                    # this task; one-shot applies retain non-blocking dispatch.
+                    blocking=True,
                 )
                 run_count += 1
 
@@ -204,6 +207,24 @@ class DynamicSceneManager:
 
         for scene_id in scenes_to_delete:
             del self.dynamic_scenes[scene_id]
+
+    async def async_stop_all_for_look(self, look_slug):
+        if not look_slug:
+            return
+
+        self.mark_look_inactive(look_slug)
+        scenes = [
+            scene
+            for scene in self.dynamic_scenes.values()
+            if scene.parameters.get("look") == look_slug
+        ]
+        for scene in scenes:
+            self.dynamic_scenes.pop(scene.id, None)
+
+        await asyncio.gather(
+            *(scene.async_stop_loop() for scene in scenes),
+            return_exceptions=True,
+        )
 
     def is_look_active(self, look_slug):
         """True if the look was applied (and not stopped), or any of its scenes run."""
