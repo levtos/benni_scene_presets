@@ -16,7 +16,9 @@ async def apply_colors(
     transition,
     shuffle,
     smart_shuffle,
-    brightness
+    brightness,
+    *,
+    blocking=False,
 ):
     """Paint a set of xy colors onto the given lights (single pass)."""
     if not preset_colors:
@@ -69,14 +71,22 @@ async def apply_colors(
             "light",
             "turn_on",
             light_params,
-            blocking=False,
+            blocking=blocking,
         )
         tasks.append(task)
 
     await asyncio.gather(*tasks)
 
 
-async def apply_kelvin(hass, kelvin, light_entity_ids, transition, brightness):
+async def apply_kelvin(
+    hass,
+    kelvin,
+    light_entity_ids,
+    transition,
+    brightness,
+    *,
+    blocking=False,
+):
     """Paint a single colour temperature (Kelvin) onto the given lights.
 
     CCT-capable lights get color_temp_kelvin directly; colour-only lights
@@ -111,7 +121,7 @@ async def apply_kelvin(hass, kelvin, light_entity_ids, transition, brightness):
             continue  # Can't represent a colour temperature on this light.
 
         tasks.append(
-            hass.services.async_call("light", "turn_on", light_params, blocking=False)
+            hass.services.async_call("light", "turn_on", light_params, blocking=blocking)
         )
 
     await asyncio.gather(*tasks)
@@ -151,7 +161,9 @@ async def apply_preset(
     shuffle,
     smart_shuffle,
     brightness_override=None,
-    step=0
+    step=0,
+    *,
+    blocking=False,
 ):
     preset_data = find_preset(preset_ident)
 
@@ -164,7 +176,14 @@ async def apply_preset(
     if kelvins is not None:
         # All lights share one colour temperature per step; the dynamic loop
         # advances `step` so a multi-value scene sweeps through the range.
-        await apply_kelvin(hass, _sweep_value(kelvins, step), light_entity_ids, transition, brightness)
+        await apply_kelvin(
+            hass,
+            _sweep_value(kelvins, step),
+            light_entity_ids,
+            transition,
+            brightness,
+            blocking=blocking,
+        )
         return
 
     preset_colors = [(light["x"], light["y"]) for light in preset_data["lights"]]
@@ -176,5 +195,6 @@ async def apply_preset(
         transition,
         shuffle,
         smart_shuffle,
-        brightness
+        brightness,
+        blocking=blocking,
     )

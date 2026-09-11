@@ -292,10 +292,10 @@ async def async_setup(hass, config):
         look_ident = call.data.get(ATTR_LOOK_ID)
         look = file_utils.get_look(look_ident)
         if not look:
-            dynamic_scene_manager.stop_all_for_look(look_ident)
+            await dynamic_scene_manager.async_stop_all_for_look(look_ident)
             return
 
-        dynamic_scene_manager.stop_all_for_look(look.get("slug"))
+        await dynamic_scene_manager.async_stop_all_for_look(look.get("slug"))
         effect_off = []
         for binding in look.get("bindings", []):
             kind = binding.get("kind")
