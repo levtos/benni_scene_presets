@@ -85,7 +85,7 @@ class DynamicScene:
         if self._running:
             return
         self._running = True
-        self._task = self.hass.create_task(self._loop())
+        self._task = self.hass.async_create_task(self._loop())
         if hasattr(self._task, "add_done_callback"):
             self._task.add_done_callback(self._task_done)
 

@@ -9,6 +9,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from . import dynamic_scene_manager, file_utils
 from .const import DOMAIN, SIGNAL_LOOKS_CHANGED, SERVICE_APPLY_LOOK, SERVICE_STOP_LOOK, ATTR_LOOK_ID
+from .util import ensure_list
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -62,4 +63,18 @@ class BenniLookSwitch(SwitchEntity):
         await self.hass.services.async_call(
             DOMAIN, SERVICE_STOP_LOOK, {ATTR_LOOK_ID: self._slug}, blocking=True
         )
+        look = file_utils.get_look(self._slug)
+        aqara_targets = []
+        for binding in (look or {}).get("bindings", []):
+            if binding.get("kind") == "aqara":
+                aqara_targets += ensure_list(
+                    (binding.get("targets") or {}).get("entity_id")
+                )
+        if aqara_targets:
+            await self.hass.services.async_call(
+                "light",
+                "turn_off",
+                {"entity_id": list(dict.fromkeys(aqara_targets))},
+                blocking=True,
+            )
         self.async_write_ha_state()

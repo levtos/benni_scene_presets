@@ -304,16 +304,23 @@ async def async_setup(hass, config):
                 raw_targets = ensure_list((binding.get("targets") or {}).get("entity_id"))
                 if raw_targets:
                     stop_svc = AQARA_STOP_SERVICES.get((aqara or {}).get("service"), "stop_dynamic_scene")
-                    hass.async_create_task(
-                        hass.services.async_call(AQARA_DOMAIN, stop_svc, {"entity_id": raw_targets}, blocking=False)
+                    stop_data = {"entity_id": raw_targets}
+                    if stop_svc == "stop_effect":
+                        stop_data["restore_state"] = False
+                    await hass.services.async_call(
+                        AQARA_DOMAIN, stop_svc, stop_data, blocking=True
                     )
+                    effect_off += raw_targets
             elif kind == "effect":
                 # Best-effort: turn the effect targets (e.g. the RGB ring) off.
                 effect_off += _resolve(binding.get("targets", {}))
 
         if effect_off:
-            hass.async_create_task(
-                hass.services.async_call("light", "turn_off", {"entity_id": effect_off}, blocking=False)
+            await hass.services.async_call(
+                "light",
+                "turn_off",
+                {"entity_id": list(dict.fromkeys(effect_off))},
+                blocking=True,
             )
 
     async def reset_userdata(call):
