@@ -41,14 +41,16 @@ class _States:
 class _Hass:
     states = _States()
 
-    def create_task(self, coro):
+    def async_create_task(self, coro):
         return asyncio.create_task(coro)
 
 
-class _NoneTaskHass:
+class _LegacyNoneTaskHass(_Hass):
     states = _States()
+    legacy_create_task_called = False
 
     def create_task(self, coro):
+        self.legacy_create_task_called = True
         coro.close()
         return None
 
@@ -91,26 +93,36 @@ def test_async_stop_all_cancels_awaits_and_clears_dynamic_scene_tasks(monkeypatc
     asyncio.run(run())
 
 
-def test_start_loop_skips_done_callback_when_create_task_returns_none(monkeypatch):
-    async def fake_apply_preset(*_args, **_kwargs):
-        raise AssertionError("loop must not run in this regression test")
+def test_start_loop_ignores_legacy_create_task_returning_none(monkeypatch):
+    calls = []
+
+    async def fake_apply_preset(*_args, **kwargs):
+        calls.append(kwargs.get("step"))
 
     monkeypatch.setattr(dynamic_scenes, "apply_preset", fake_apply_preset)
 
-    manager = dynamic_scenes.DynamicSceneManager()
-    created = manager.create_new(
-        _NoneTaskHass(),
-        {
-            "light_entity_ids": ["light.test"],
-            dynamic_scenes.ATTR_SCENE_PRESET_ID: "preset",
-        },
-        interval=3600,
-    )
+    async def run():
+        hass = _LegacyNoneTaskHass()
+        manager = dynamic_scenes.DynamicSceneManager()
+        manager.create_new(
+            hass,
+            {
+                "light_entity_ids": ["light.test"],
+                dynamic_scenes.ATTR_SCENE_PRESET_ID: "preset",
+            },
+            interval=3600,
+        )
 
-    scene = next(iter(manager.dynamic_scenes.values()))
-    assert created["running"] is True
-    assert scene._running is True
-    assert scene._task is None
+        await asyncio.sleep(0)
+        scene = next(iter(manager.dynamic_scenes.values()))
+
+        assert hass.legacy_create_task_called is False
+        assert calls == [0]
+        assert scene._task is not None
+
+        await manager.async_stop_all()
+
+    asyncio.run(run())
 
 
 def test_async_stop_all_for_look_drains_paint_before_following_turn_off(monkeypatch):
