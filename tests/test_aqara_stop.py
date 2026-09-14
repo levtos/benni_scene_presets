@@ -4,6 +4,8 @@ import os
 import sys
 import types
 
+import pytest
+
 
 PACKAGE_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -127,9 +129,10 @@ class _Call:
 
 
 class _Services:
-    def __init__(self, calls=None):
+    def __init__(self, calls=None, stop_behavior="wait"):
         self.handlers = {}
         self.calls = calls if calls is not None else []
+        self.stop_behavior = stop_behavior
         self.stop_started = asyncio.Event()
         self.release_stop = asyncio.Event()
 
@@ -140,6 +143,10 @@ class _Services:
         if domain == "aqara_advanced_lighting" and service == "stop_effect":
             self.calls.append(("stop_started", data, blocking))
             self.stop_started.set()
+            if self.stop_behavior == "raise":
+                raise RuntimeError("service not found")
+            if self.stop_behavior == "hang":
+                await asyncio.Event().wait()
             await self.release_stop.wait()
             self.calls.append(("stop_finished", data, blocking))
             return
@@ -147,8 +154,8 @@ class _Services:
 
 
 class _Hass:
-    def __init__(self, calls=None):
-        self.services = _Services(calls)
+    def __init__(self, calls=None, stop_behavior="wait"):
+        self.services = _Services(calls, stop_behavior)
 
 
 def test_stop_look_awaits_aqara_stop_before_unconditional_off(monkeypatch):
@@ -208,6 +215,42 @@ def test_stop_look_awaits_aqara_stop_before_unconditional_off(monkeypatch):
             True,
         ),
     ]
+
+
+@pytest.mark.parametrize("stop_behavior", ["raise", "hang"])
+def test_aqara_stop_failure_or_timeout_does_not_prevent_off(
+    monkeypatch, caplog, stop_behavior
+):
+    integration = _load_integration(monkeypatch)
+    integration.AAL_STOP_TIMEOUT_SECONDS = 0.01
+    integration.file_utils.get_look = lambda _slug: {
+        "slug": "overwatch",
+        "bindings": [
+            {
+                "kind": "aqara",
+                "aqara": "ring-effect",
+                "targets": {"entity_id": ["light.living_ceiling_light_rgb"]},
+            }
+        ],
+    }
+    integration.file_utils.get_aqara = lambda _slug: {
+        "service": "set_dynamic_effect"
+    }
+    hass = _Hass(integration.dynamic_scene_manager.calls, stop_behavior)
+
+    async def run():
+        await integration.async_setup(hass, {})
+        handler = hass.services.handlers[(integration.DOMAIN, integration.SERVICE_STOP_LOOK)]
+        await handler(_Call(look="overwatch"))
+
+    asyncio.run(run())
+
+    assert hass.services.calls[-1] == (
+        "light.turn_off",
+        {"entity_id": ["light.living_ceiling_light_rgb"]},
+        True,
+    )
+    assert "Aqara action stop_effect" in caplog.text
 
 
 def test_switch_off_sends_aqara_off_even_when_state_is_off(monkeypatch):
