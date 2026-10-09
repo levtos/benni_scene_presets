@@ -1,0 +1,38 @@
+{
+  "brand": "IRIS",
+  "repository": "levtos/benni_scene_presets",
+  "domain": "benni_scene_presets",
+  "original_sha256": "e205459df3bc0cfd827613e974cd37f7c611691078da29bf72c645126db8c472",
+  "original_size": [
+    1254,
+    1254
+  ],
+  "original_mode": "RGB",
+  "icon_crop_xyxy": [
+    177,
+    0,
+    1077,
+    900
+  ],
+  "resampling": "Pillow LANCZOS",
+  "files": {
+    "brand/icons/icon-128.png": "da857f80b1838edb434183b717c884b2d77fd39328afdfab87b4c499e6f83ad8",
+    "brand/icons/icon-256.png": "99afddff0f2661abe0aab9476741e1c4434277add6d02be3736571e9758bc010",
+    "brand/icons/icon-32.png": "67d3a235412c7799783b6f32c6b8b097ff2262a3983d9f2b4135e931873d0dbc",
+    "brand/icons/icon-512.png": "9952d5313a5e7025092e9664db89d355316c77b15b5a9be5fb4b9710b6fe0b80",
+    "brand/icons/icon-64.png": "eda3a986403ca31f7dc2e94123f08f7be84917ed9af96d5d2f88623c446b5253",
+    "brand/logos/logo-1024.png": "2efa5e2120e99d16cd9ced3a60101dbb252404db6d0fc0a67b94cca4b243904a",
+    "brand/logos/logo-128.png": "1b7140277f004d70894c0529499fa1d6659a907aa10f2a22b694d06d011e04cf",
+    "brand/logos/logo-256.png": "d97de6c1c9c7cd818341828c8343542706df6ae8d35a678ea45c252253e9b733",
+    "brand/logos/logo-512.png": "10a7fca4704126a44ad72accebf62d3be63c0e988905596d7a9a7ba22f4df0d8",
+    "brand/original/IRIS.png": "e205459df3bc0cfd827613e974cd37f7c611691078da29bf72c645126db8c472",
+    "custom_components/benni_scene_presets/brand/dark_icon.png": "99afddff0f2661abe0aab9476741e1c4434277add6d02be3736571e9758bc010",
+    "custom_components/benni_scene_presets/brand/dark_icon@2x.png": "9952d5313a5e7025092e9664db89d355316c77b15b5a9be5fb4b9710b6fe0b80",
+    "custom_components/benni_scene_presets/brand/dark_logo.png": "d97de6c1c9c7cd818341828c8343542706df6ae8d35a678ea45c252253e9b733",
+    "custom_components/benni_scene_presets/brand/dark_logo@2x.png": "10a7fca4704126a44ad72accebf62d3be63c0e988905596d7a9a7ba22f4df0d8",
+    "custom_components/benni_scene_presets/brand/icon.png": "99afddff0f2661abe0aab9476741e1c4434277add6d02be3736571e9758bc010",
+    "custom_components/benni_scene_presets/brand/icon@2x.png": "9952d5313a5e7025092e9664db89d355316c77b15b5a9be5fb4b9710b6fe0b80",
+    "custom_components/benni_scene_presets/brand/logo.png": "d97de6c1c9c7cd818341828c8343542706df6ae8d35a678ea45c252253e9b733",
+    "custom_components/benni_scene_presets/brand/logo@2x.png": "10a7fca4704126a44ad72accebf62d3be63c0e988905596d7a9a7ba22f4df0d8"
+  }
+}
