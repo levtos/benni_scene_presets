@@ -1,3 +1,5 @@
+![IRIS](brand/logos/logo-256.png)
+
 # Benni Scene Presets
 
 A Home Assistant custom integration for **dynamic, custom light scenes** — works with
@@ -214,3 +216,8 @@ also Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 This is an independent fork: development, issues and pull requests happen here, not
 upstream.
+
+
+## Unicorn Station branding
+
+**IRIS** is the product brand. See [asset provenance and HA display conventions](brand/README.md). Technical identities and behavior remain unchanged.
